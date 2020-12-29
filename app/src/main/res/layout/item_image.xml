@@ -26,7 +26,8 @@
         tools:text="一笑"
         android:textColor="@color/c697A9F"
         android:textSize="@dimen/text_size_14"
-        app:layout_constraintLeft_toRightOf="@+id/iv_photo" />
+        app:layout_constraintLeft_toRightOf="@+id/iv_photo"
+        tools:ignore="MissingConstraints" />
 
     <com.example.penyyouquandemo.view.ExpandTextView
         android:id="@+id/tv_content"
@@ -45,7 +46,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_name" />
 
 
-    <com.example.expandtextview.view.NineGridView
+    <com.example.penyyouquandemo.view.NineGridView
         android:id="@+id/layout_nine"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -122,7 +123,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_time">
 
-        <com.example.expandtextview.view.PraiseListView
+        <com.example.penyyouquandemo.view.PraiseListView
             android:id="@+id/rv_like"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -137,7 +138,7 @@
             android:layout_marginTop="@dimen/public_5dp"
             android:layout_marginBottom="@dimen/public_5dp"/>
 
-        <com.example.expandtextview.view.CommentsView
+        <com.example.penyyouquandemo.view.CommentsView
             android:id="@+id/rv_comment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

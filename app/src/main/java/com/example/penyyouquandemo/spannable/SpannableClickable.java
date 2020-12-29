@@ -4,8 +4,8 @@ import android.text.TextPaint;
 import android.text.style.ClickableSpan;
 import android.view.View;
 
-import com.example.expandtextview.R;
-import com.example.expandtextview.app.App;
+import com.example.penyyouquandemo.R;
+import com.example.penyyouquandemo.app.App;
 
 
 /**

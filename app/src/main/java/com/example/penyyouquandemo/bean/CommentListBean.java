@@ -18,7 +18,6 @@ public class CommentListBean {
     private UserBean replyUser; // 回复人信息
     private UserBean commentsUser;  // 评论人信息
 
-
     public String getId() {
         return id;
     }

@@ -7,7 +7,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/message_bg_delete"
+        android:background="@mipmap/message_bg_delete"
         android:orientation="vertical">
 
         <TextView

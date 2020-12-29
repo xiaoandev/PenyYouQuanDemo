@@ -1,21 +1,34 @@
 package com.example.penyyouquandemo.activity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.penyyouquandemo.R;
+import com.example.penyyouquandemo.adapter.CircleAdapter;
+import com.example.penyyouquandemo.bean.CircleBean;
 import com.example.penyyouquandemo.model.Moment;
+import com.example.penyyouquandemo.util.AssetsUtil;
+import com.example.penyyouquandemo.util.CommonUtils;
+import com.example.penyyouquandemo.util.GlideSimpleTarget;
+import com.example.penyyouquandemo.util.Utils;
+import com.github.ielse.imagewatcher.ImageWatcher;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,13 +50,21 @@ import pub.devrel.easypermissions.EasyPermissions;
  * 你自己项目里「可以不继承 BGAPPToolbarActivity」，我在这里继承 BGAPPToolbarActivity 只是为了方便写 Demo
  * BGAOnRVItemClickListener和BGAOnRVItemLongClickListener这两个接口是为了测试事件传递是否正确，你自己的项目里可以不实现这两个接口
  */
-public class MomentListActivity extends BGAPPToolbarActivity implements EasyPermissions.PermissionCallbacks, BGANinePhotoLayout.Delegate, BGAOnRVItemClickListener, BGAOnRVItemLongClickListener {
+public class MomentListActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks, BGANinePhotoLayout.Delegate, BGAOnRVItemClickListener, BGAOnRVItemLongClickListener,
+        ImageWatcher.Loader {
+
     private static final int PRC_PHOTO_PREVIEW = 1;
 
     private static final int RC_ADD_MOMENT = 1;
 
     private RecyclerView mMomentRv;
     private MomentAdapter mMomentAdapter;
+    private CircleAdapter circleAdapter;
+
+    private List<CircleBean.DataBean> dataBeans;
+    private ImageWatcher imageWatcher;
+    private LinearLayout llComment;
+    private EditText etComment;
 
     /**
      * 设置图片预览时是否具有保存图片功能「测试接口用的」
@@ -52,31 +73,82 @@ public class MomentListActivity extends BGAPPToolbarActivity implements EasyPerm
 
     private BGANinePhotoLayout mCurrentClickNpl;
 
-    @Override
-    protected void initView(Bundle savedInstanceState) {
-        setContentView(R.layout.activity_moment_list);
-        mDownLoadableCb = findViewById(R.id.cb_moment_list_downloadable);
-        mMomentRv = findViewById(R.id.rv_moment_list_moments);
-    }
 
     @Override
-    protected void setListener() {
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_moment_list);
+        initView();
+        initData();
+        setListener();
+    }
+
+    private void initView() {
+        mDownLoadableCb = findViewById(R.id.cb_moment_list_downloadable);
+        llComment = findViewById(R.id.ll_comment);
+        etComment = findViewById(R.id.et_comment);
+        mMomentRv = findViewById(R.id.rv_moment_list_moments);
+        imageWatcher = findViewById(R.id.imageWatcher);
+        //初始化仿微信图片滑动加载器
+        imageWatcher.setTranslucentStatus(Utils.calcStatusBarHeight(this));
+        imageWatcher.setErrorImageRes(R.mipmap.error_picture);
+        imageWatcher.setOnPictureLongPressListener((ImageWatcher.OnPictureLongPressListener) this);
+        imageWatcher.setLoader((ImageWatcher.Loader) this);
+    }
+
+    private void initData() {
+        dataBeans = new ArrayList<>();
+        dataBeans = AssetsUtil.getStates(this);
+
+        mMomentRv.setLayoutManager(new LinearLayoutManager(this));
+//        mMomentRv.setAdapter(mMomentAdapter);
+
+        circleAdapter = new CircleAdapter(dataBeans, imageWatcher, llComment, etComment, (CircleAdapter.Click) this);
+        mMomentRv.setAdapter(circleAdapter);
+    }
+
+
+    private void setListener() {
         mMomentAdapter = new MomentAdapter(mMomentRv);
         mMomentAdapter.setOnRVItemClickListener(this);
         mMomentAdapter.setOnRVItemLongClickListener(this);
 
         mMomentRv.addOnScrollListener(new BGARVOnScrollListener(this));
+
+        mMomentRv.setOnTouchListener((view, motionEvent) -> {
+            if (llComment.getVisibility() == View.VISIBLE) {
+                updateEditTextBodyVisible(View.GONE);
+                return true;
+            }
+            return false;
+        });
     }
 
-    @Override
-    protected void processLogic(Bundle savedInstanceState) {
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        setTitle("朋友圈列表");
+//    @Override
+//    protected void processLogic(Bundle savedInstanceState) {
+//        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+//        setTitle("朋友圈列表");
+//
+//        mMomentRv.setLayoutManager(new LinearLayoutManager(this));
+////        mMomentRv.setAdapter(mMomentAdapter);
+//
+//        circleAdapter = new CircleAdapter(dataBeans, imageWatcher, llComment, etComment, this);
+//        mMomentRv.setAdapter(circleAdapter);
+//
+//        addNetImageTestData();
+//    }
 
-        mMomentRv.setLayoutManager(new LinearLayoutManager(this));
-        mMomentRv.setAdapter(mMomentAdapter);
+    public void updateEditTextBodyVisible(int visibility) {
+        llComment.setVisibility(visibility);
+        if (View.VISIBLE == visibility) {
+            llComment.requestFocus();
+            //弹出键盘
+            CommonUtils.showSoftInput(etComment.getContext(), etComment);
 
-        addNetImageTestData();
+        } else if (View.GONE == visibility) {
+            //隐藏键盘
+            CommonUtils.hideSoftInput(etComment.getContext(), etComment);
+        }
     }
 
     /**
@@ -116,6 +188,11 @@ public class MomentListActivity extends BGAPPToolbarActivity implements EasyPerm
         } else if (v.getId() == R.id.tv_moment_list_system) {
             startActivity(new Intent(this, SystemGalleryActivity.class));
         }
+    }
+
+    @Override
+    public void load(Context context, Uri uri, ImageWatcher.LoadCallback loadCallback) {
+        Glide.with(context).asBitmap().load(uri.toString()).into(new GlideSimpleTarget(loadCallback));
     }
 
     @Override
